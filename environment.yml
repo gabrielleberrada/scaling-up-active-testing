@@ -1,0 +1,44 @@
+name: at_llms
+channels:
+  - pytorch
+  - nvidia
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - pytorch
+  - torchvision
+  - torchaudio
+  - pytorch-cuda=11.7
+  - numpy
+  - transformers
+  - evaluate
+  - pip:
+    - transformers>=4.31
+    - packaging
+    - ninja
+    - datasets>=2.14.16
+    - scikit-learn
+    - pandas
+    - flake8
+    - omegaconf
+    - jupyterlab
+    - notebook
+    - matplotlib
+    - seaborn
+    - tqdm
+    - ipywidgets
+    - scipy
+    - wandb
+    - tokenizers>=0.13.3
+    - accelerate
+    - ml_collections
+    - torchmetrics
+    - openai
+    - tiktoken
+    - einops
+    - bitsandbytes
+    - nltk
+    - tenacity
+    - sentencepiece
+    - safetensors
