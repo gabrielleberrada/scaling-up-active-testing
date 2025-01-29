@@ -11,42 +11,36 @@ import seaborn.objects as so
 import metrics
 from scipy.stats import spearmanr
 
-NAMES = {'llama2_7b': 'LLaMa2-7B ZS',
-         'llama2_7b_icl10': 'LLaMa-2 7B ICL',
-         'llama2_7b_icl20': 'LLaMa-2 7B ICL',
-         'llama2_7b_icl30': 'LLaMa-2 7B ICL',
-         'llama2_7b_icl40': 'LLaMa-2 7B ICL',
-         'llama2_7b_icl50': 'LLaMa-2 7B ICL',
-         'llama2_7b_icl50_v1': 'LLaMa2-7B ICL',
-         'llama2_7b_chat': 'LLaMa2-7B-Chat ZS',
-         'llama2_70b': 'LLaMa2-70B ZS',
-         'llama2_70b_icl10': 'LLaMa-2 70B ICL',
-         'llama2_70b_icl20': 'LLaMa-2 70B ICL',
-         'llama2_70b_icl30': 'LLaMa-2 70B ICL',
-         'llama2_70b_icl40': 'LLaMa-2 70B ICL',
-         'llama2_70b_icl50': 'LLaMa-2 70B ICL',
-         'llama2_70b_chat': 'LLaMa2-70B-Chat ZS',
-         'phi2': 'Phi-2 ZS',
-         'phi2_icl10': 'Phi-2 ICL',
-         'phi2_icl20': 'Phi-2 ICL',
-         'phi2_icl30': 'Phi-2 ICL',
-         'phi2_icl40': 'Phi-2 ICL',
-         'phi2_icl50': 'Phi-2 ICL',
-         'phi3': 'Phi-3 ZS',
-         'phi3_icl10': 'Phi-3 ICL',
-         'phi3_icl20': 'Phi-3 ICL',
-         'phi3_icl30': 'Phi-3 ICL',
-         'phi3_icl40': 'Phi-3 ICL',
-         'phi3_icl50': 'Phi-3 ICL',
+NAMES = {'llama2_7b': '7B-zero',
+         'llama2_7b_icl10': '7B-few',
+         'llama2_7b_icl20': '7B-few',
+         'llama2_7b_icl30': '7B-few',
+         'llama2_7b_icl40': '7B-few',
+         'llama2_7b_icl50': '7B-few',
+         'llama2_7b_icl50_v1': '7B-few',
+         'llama2_70b': '70B-zero',
+         'llama2_70b_icl10': '70B-few',
+         'llama2_70b_icl20': '70B-few',
+         'llama2_70b_icl30': '70B-few',
+         'llama2_70b_icl40': '70B-few',
+         'llama2_70b_icl50': '70B-few',
          'sst2': 'SST-2',
          'fpb': 'FPB',
          'agnews': 'AGN',
          'hatespeech': 'HS',
          'subj': 'Subj',
-         'iid': 'I.I.D.',
+         'iid': 'Uniform random',
          'exp1': 'Experiment 1',
          'exp2': 'Experiment 2'
         }
+
+NAMES_SURROGATE = {
+         'llama2_7b_icl50': 'LURE-7B',
+         'llama2_7b_icl40': 'LURE-7B',
+         'llama2_70b_icl50': 'LURE-70B',
+         'llama2_70b_icl40': 'LURE-70B'
+        }
+
 
 def setup_matplotlib(
     small_size: int = 4,
@@ -95,17 +89,17 @@ def plot_all_errors(preds,
         else:
             iterations = np.repeat(np.arange(1, length, step=step), runs)
 
-        data_mse = pd.DataFrame({'N° Acquired Points': iterations,
+        data_mse = pd.DataFrame({'Number of acquired labels': iterations,
                                  'Log Squared Error': log_mse_loss.flatten(), 
                                  'Squared Error': mse_loss.flatten(),
                                  'Method': method_name})
         data = pd.concat((data, data_mse), ignore_index=True)
         
-    fig, axs = plt.subplots(1, 3, figsize=(6, 2))
+    fig, axs = plt.subplots(1, 3, figsize=(3.5, 1.5))
     
     sns.lineplot(data, 
                 ax=axs[0],
-                x='N° Acquired Points', 
+                x='Number of acquired labels', 
                 y='Log Squared Error', 
                 hue='Method', 
                 linestyle='dashdot',
@@ -118,7 +112,7 @@ def plot_all_errors(preds,
 
     sns.lineplot(data, 
                 ax=axs[1],
-                x='N° Acquired Points', 
+                x='Number of acquired labels', 
                 y='Squared Error', 
                 hue='Method', 
                 linestyle='dashdot',
@@ -132,7 +126,7 @@ def plot_all_errors(preds,
     
     sns.lineplot(data, 
                 ax=axs[2],
-                x='N° Acquired Points', 
+                x='Number of acquired labels', 
                 y='Squared Error', 
                 hue='Method', 
                 linestyle='dashdot',
@@ -140,7 +134,7 @@ def plot_all_errors(preds,
                 estimator='median',
                 legend=True)
     axs[2].set_yscale('log')
-    axs[2].set_title(f'Median Squared Error +/- {e[1]} %')
+    axs[2].set_title(f'Median Squared Error - PI 10')
     axs[2].spines['top'].set_visible(False)
     axs[2].spines['right'].set_visible(False)
     axs[2].set_ylabel('')
@@ -148,8 +142,8 @@ def plot_all_errors(preds,
     handles, labels = axs[0].get_legend_handles_labels()
     for ax in axs:
         ax.get_legend().remove()
-    fig.legend(handles, labels, loc='center right')
-    fig.tight_layout(rect=[0, 0, 0.77, 0.95])
+    fig.legend(handles, labels, loc='upper center', ncols=5)
+    fig.tight_layout(rect=[0, 0, 1, 0.95])
     fig.suptitle(title)
     
     if savefig[0]:
@@ -195,15 +189,6 @@ def plot_barplots(data,
 def get_method_name(data_row, extended=True):
     if 'ASE' in data_row and data_row['ASE']:
         return ' ASE'
-    if extended:
-        if 'Greedy' in data_row and data_row['Greedy']:
-            return ' Div.'
-        if 'Adaptive' in data_row and data_row['Adaptive']:
-            if data_row['Entropy']:
-                return ' PE Adp.'
-            if data_row['NLL']:
-                return ' NLL Adp.'
-            return ' CE Adp.'
     if data_row['NLL']:
         return ' NLL' + (' unw.' if ('IS' in data_row and data_row['IS']) else "")
     if data_row['Entropy']:
@@ -249,11 +234,11 @@ def plot_relative_cost(data,
         corresp_values = metrics.sma(corresp_values[np.any(limits, axis=1)], smoothing)[:len(pred)]
         df = pd.concat((df, pd.DataFrame({
                                 'Model': np.repeat(NAMES[data_row['Model']], len(corresp_values)),
-                                'Surrogate': np.repeat(NAMES[data_row['Surrogate']] + 
+                                'Surrogate': np.repeat(NAMES_SURROGATE[data_row['Surrogate']] + 
                                                        get_method_name(data_row),
                                             len(corresp_values)),
                                 'Dataset': np.repeat(NAMES[data_row['Dataset']], len(corresp_values)),
-                                'Number of acquired points': np.arange(len(corresp_values)),
+                                'Number of acquired labels': np.arange(len(corresp_values)),
                                 'Relative Labelling Cost': corresp_values,
                                 #'Error': np.repeat(0., len(corresp_values))
                             })))
@@ -264,7 +249,7 @@ def plot_relative_cost(data,
                                     'Model': np.repeat(model, N),
                                     'Surrogate': np.repeat('I.I.D.', N),
                                     'Dataset': np.repeat('', N),
-                                    'Number of acquired points': np.arange(N),
+                                    'Number of acquired labels': np.arange(N),
                                     'Relative Labelling Cost': corresp_values,
                                     #'Error': np.repeat(0., N)
                                 })))
@@ -274,7 +259,7 @@ def plot_relative_cost(data,
     if len(df.groupby('Model')) > 1:
         fig, axs = plt.subplots(1, len(df.groupby('Model')), figsize=(6, 2), layout="tight")
         for i, (model, df_) in enumerate(df.groupby('Model')):
-            sns.lineplot(df_, style='Surrogate', y='Relative Labelling Cost', x='Number of acquired points', 
+            sns.lineplot(df_, style='Surrogate', y='Relative Labelling Cost', x='Number of acquired labels', 
                          hue='Dataset', palette=palette, ax=axs[i], style_order=df['Surrogate'].unique())
             axs[i].set_title(model)
             if xlim:
@@ -287,7 +272,6 @@ def plot_relative_cost(data,
         handles, labels = axs[-1].get_legend_handles_labels()
         for ax in axs:
             ax.get_legend().remove()
-        #plt.tight_layout()
         splitting_index = labels.index('Surrogate')
         dataset_handles = handles[:splitting_index]
         surrogate_handles = handles[splitting_index:]
@@ -302,7 +286,7 @@ def plot_relative_cost(data,
                    ncols=ncols)
     else:
         fig, axs = plt.subplots(1, len(df.groupby('Model')), figsize=(4, 2), layout="tight")
-        sns.lineplot(df, style='Surrogate', y='Relative Labelling Cost', x='Number of acquired points',
+        sns.lineplot(df, style='Surrogate', y='Relative Labelling Cost', x='Number of acquired labels',
                      hue='Dataset', palette=palette, ax=axs)
         axs.set_title(df['Model'].unique()[0])
         if xlim:
@@ -372,29 +356,28 @@ def plot_relative_error(data,
                 relative_error_ase = metrics.sma(pred_ase / baseline, smoothing)
                 df = pd.concat((df, pd.DataFrame({
                                     'Model': np.repeat(NAMES[data_row['Model']], N),
-                                    'Surrogate': np.repeat(NAMES[data_row['Surrogate']] + 
+                                    'Surrogate': np.repeat(NAMES_SURROGATE[data_row['Surrogate']] + 
                                                         get_method_name(data_row) + " ASE",
                                                 N),
                                     'Dataset': np.repeat(NAMES[data_row['Dataset']], N),
-                                    'Number of acquired points': np.arange(N),
+                                    'Number of acquired labels': np.arange(N),
                                     'Relative Error': relative_error_ase,
                                 })))
     relative_error = np.ones(N)
     for model in df['Model'].unique():
         df = pd.concat((df, pd.DataFrame({
                                     'Model': np.repeat(model, N),
-                                    'Surrogate': np.repeat('I.I.D.', N),
+                                    'Surrogate': np.repeat('Uniform random', N),
                                     'Dataset': np.repeat('', N),
-                                    'Number of acquired points': np.arange(N),
+                                    'Number of acquired labels': np.arange(N),
                                     'Relative Error': relative_error,
                                 })))
     palette = sns.color_palette("tab10", n_colors=4)
-    datasets = df['Dataset'].unique()
     y = df['Relative Error'].max()
     if len(df.groupby('Model')) > 1:
         fig, axs = plt.subplots(len(df.groupby('Model')), 1, figsize=(3, 2.5), layout="tight")
         for i, (model, df_) in enumerate(df.groupby('Model')):
-            sns.lineplot(df_, style='Surrogate', y='Relative Error', x='Number of acquired points', 
+            sns.lineplot(df_, style='Surrogate', y='Relative Error', x='Number of acquired labels', 
                          hue='Dataset', palette=palette, ax=axs[i], style_order=df['Surrogate'].unique())
             axs[i].set_title(model)
             if xlim:
@@ -419,7 +402,7 @@ def plot_relative_error(data,
                    ncols=ncols)
     else:
         fig, axs = plt.subplots(1, len(df.groupby('Model')), figsize=(3, 1.3), layout="tight")
-        sns.lineplot(df, style='Surrogate', y='Relative Error', x='Number of acquired points',
+        sns.lineplot(df, style='Surrogate', y='Relative Error', x='Number of acquired labels',
                      hue='Dataset', palette=palette, ax=axs)
         axs.set_title(df['Model'].unique()[0])
         if xlim:
@@ -475,11 +458,11 @@ def plot_bootstrap_errors(datasets, model_file, surrogates, xlim=None, aspect=1.
                                  'Loss prediction': metrics.se(pred, true_error).flatten(),
                                  'Method': method_name,
                                   'Dataset': NAMES[dataset_file],
-                                  'Surrogate': NAMES[surrogate_file]})
+                                  'Surrogate': NAMES_SURROGATE[surrogate_file]})
                 data = pd.concat((data, df), ignore_index=True)
             iterations = np.arange(1, length+1) if step == 1 else np.arange(1, length, step=step)
     g = sns.relplot(data,
-                x='N° Acquired Points', 
+                x='Number of acquired labels', 
                 y='Loss prediction', 
                 hue='Method', 
                 col='Dataset',
@@ -681,7 +664,7 @@ def plot_comparison_errors(step,
                 else:
                     iterations = np.repeat(np.arange(1, length, step=step), runs)    
                 
-                data_mse = pd.DataFrame({'N° Acquired Points': iterations, 
+                data_mse = pd.DataFrame({'Number of acquired labels': iterations, 
                                     'Squared Error': mse_loss.flatten(),
                                     'Method': method_name})
                 data = pd.concat((data, data_mse), ignore_index=True)
@@ -717,3 +700,85 @@ def plot_comparison_errors(step,
     
     if savefig[0]:
         plt.savefig(savefig[1])
+
+def plot_bootstrap_mse(data,
+                    title='',
+                    savefig=(False, None),
+                    xlim=None,
+                    smoothing=1,
+                    confidence_interval=2,
+                    reduced=False,
+                    subset='active'):
+    df = pd.DataFrame({})
+    add = '_v1' if reduced else ''
+    for data_row in data.iterrows():
+        data_row = data_row[1]
+        if data_row.loc['Dataset'] == 'agnews' and (
+            data_row.loc['Model'].endswith('icl50') or data_row.loc['Surrogate'].endswith('icl50')
+        ):
+            data_row.loc['Model'] = 'icl40'.join(data_row.loc['Model'].split('icl50'))
+            data_row.loc['Surrogate'] = 'icl40'.join(data_row.loc['Surrogate'].split('icl50'))
+            data_row.loc['File'] = 'icl40'.join(data_row.loc['File'].split('icl50'))
+        path = f"{data_row.loc['Dataset']}/{data_row.loc['Model']}/"
+        post = '_entropy' if data_row['Entropy'] else ('_nll' if data_row['NLL'] else '')
+        if not(os.path.isfile(f"{path}/{data_row.loc['File']}_at_loss{post}{add}.npy")):
+            continue
+        if data_row.loc['Dataset'] == 'fpb':
+            target_error = utils.load_tensors(f'{path}active_set_loss').numpy()
+        else:
+            target_error = utils.load_tensors(f'{path}{subset}_set_loss').numpy()
+        single_run_error = utils.load_arrays(f"{path}/{data_row.loc['File']}_at_loss{post}{add}")
+        bootstrap_variance = utils.load_arrays(f"{path}/{data_row.loc['File']}_bootstrap_variance{post}{add}")
+        true_error = metrics.se(single_run_error, target_error)
+        mse = metrics.sma(np.median((bootstrap_variance-true_error)**2, axis=1), smoothing)
+        in_interval = metrics.sma(np.logical_and((single_run_error + confidence_interval*np.sqrt(bootstrap_variance)) >= target_error,
+                       (single_run_error-confidence_interval*np.sqrt(bootstrap_variance)) <= target_error).mean(axis=1), smoothing)
+        df = pd.concat((df, pd.DataFrame({
+                                'Target model': np.repeat(NAMES[data_row['Model']], len(mse)),
+                                'Surrogate': np.repeat(NAMES_SURROGATE[data_row['Surrogate']],
+                                            len(mse)),
+                                'Dataset': np.repeat(NAMES[data_row['Dataset']], len(mse)),
+                                'Number of acquired labels': np.arange(len(mse)),
+                                'Median relative error': mse,
+                                'Coverage probability': in_interval,
+                            })))
+    palette = sns.color_palette("tab10", n_colors=4)
+    fig, axs = plt.subplots(2, len(df.groupby('Dataset')), figsize=(6.6, 2), layout="tight")
+    for j, (dataset, df_) in enumerate(df.groupby(['Dataset'])):
+            sns.lineplot(df_, style='Surrogate', y='Median relative error', x='Number of acquired labels',
+                        hue='Target model', palette=palette,
+                        ax=axs[0, j])
+            axs[0, j].set_title(f'{dataset[0]}')
+            axs[0, j].set_yscale('log')
+            if xlim:
+                axs[0, j].set_xlim(0, xlim)
+            axs[0, j].set_ylabel('')
+            axs[0, j].spines['top'].set_visible(False)
+            axs[0, j].spines['right'].set_visible(False)
+            axs[0, j].set_ylabel('MSE-estimation error')
+
+            sns.lineplot(df_, style='Surrogate', y='Coverage probability', x='Number of acquired labels',
+                    hue='Target model', palette=palette,
+                    ax=axs[1, j])
+            axs[1, j].set_title(f'{dataset[0]}')
+            axs[1, j].set_ylim(-0.05, 1.)
+            if xlim:
+                axs[1, j].set_xlim(0, xlim)
+            axs[1, j].spines['top'].set_visible(False)
+            axs[1, j].spines['right'].set_visible(False)
+            axs[1, j].axhline(y=0.95, xmin=0, xmax=axs[1, j].get_xlim()[1], linestyle='--', color='dimgray')
+            axs[1, j].set_ylabel('Coverage probability')
+    handles, labels = axs[-1, -1].get_legend_handles_labels()
+    for ax in axs.flatten():
+        ax.get_legend().remove()
+    splitting_index = labels.index('Surrogate')
+    model_handles = handles[:splitting_index]
+    surrogate_handles = handles[splitting_index:]
+    model_labels = labels[:splitting_index]
+    surrogate_labels = labels[splitting_index:]
+    fig.legend(model_handles, model_labels, loc="upper center", bbox_to_anchor=(0.35, 1.05), ncols=5)
+    fig.legend(surrogate_handles, surrogate_labels, loc="upper center", bbox_to_anchor=(0.77, 1.05), ncols=3)
+    fig.suptitle(title)
+    plt.tight_layout()
+    if savefig[0]:
+        fig.savefig(savefig[1], bbox_inches="tight")
