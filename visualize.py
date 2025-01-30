@@ -149,6 +149,76 @@ def plot_all_errors(preds,
     if savefig[0]:
         plt.savefig(savefig[1])
 
+def plot_comparison_errors_small(step,
+                            datasets,
+                            model,
+                            files,
+                            set_name='full',
+                            title='',
+                            ratios=(1.65, 1.3),
+                            savefig=(False, None)):
+    rows = len(datasets)//2
+    columns = len(datasets)//rows
+    fig, axs = plt.subplots(rows, columns, figsize=(columns*ratios[0], rows*ratios[1]))
+    length = 1
+    for j, dataset in enumerate(datasets):
+        row = j // 2
+        col = j % 2
+        target = utils.load_tensors(f'{dataset}/{model}/{set_name if dataset != 'fpb' else 'active'}_set_loss').numpy()
+        data = pd.DataFrame({})
+        for method_name, file in files.items():
+            pred = utils.load_arrays(f'{dataset}/{model}/{model}_{file}')
+            if len(pred.shape) < 2:
+                pred = np.array([pred]*length)
+            mse_loss = metrics.se(pred, target)
+            runs = pred.shape[1]
+            length = len(mse_loss)
+            if rows > 1:
+                ax = axs[row, col]
+            else:
+                ax = axs[j]
+            if step == 1:
+                iterations = np.repeat(np.arange(1, length+1), runs)
+            else:
+                iterations = np.repeat(np.arange(1, length, step=step), runs)    
+            
+            data_mse = pd.DataFrame({'Number of acquired labels': iterations, 
+                                'Squared Error': mse_loss.flatten(),
+                                'Method': method_name})
+            data = pd.concat((data, data_mse), ignore_index=True)
+        sns.lineplot(data, 
+                ax=ax,
+                x='Number of acquired labels', 
+                y='Squared Error', 
+                hue='Method', 
+                linestyle='dashdot',
+                errorbar=('pi', 10),
+                estimator='median',
+                legend=True)
+        ax.set_yscale('log')
+        ax.set_title(f'{NAMES[dataset]}')
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.set_ylabel('')
+    if rows > 1:
+        for row in range(rows):
+            axs[row, 0].set_ylabel(f'Risk-estimation error')
+            handles, labels = axs[row, 0].get_legend_handles_labels()
+            for col in range(columns):
+                axs[row, col].get_legend().remove()
+    else:
+        axs[0].set_ylabel(f'Risk-estimation error')
+        handles, labels = axs[0].get_legend_handles_labels()
+        for ax in axs:
+            ax.get_legend().remove()
+    fig.legend(handles, labels, loc='upper center', ncols=3)
+    fig.tight_layout(rect=[0, 0, 1, 0.94])#0.93
+    fig.suptitle(title)
+    
+    if savefig[0]:
+        plt.savefig(savefig[1])
+
+
 def plot_barplots(data,
                 step,
                 loss,
