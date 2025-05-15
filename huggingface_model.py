@@ -16,9 +16,6 @@ from transformers import set_seed
 
 from huggingface_hub import snapshot_download
 
-os.environ['HUGGING_FACE_HUB_TOKEN'] = '' # fill here
-os.environ["XDG_CACHE_HOME"]= '' # fill here
-
 class N:
     LOGITS = 'logits'
     LOG_LIKELIHOODS = 'log_likelihoods'
@@ -156,17 +153,17 @@ class HuggingfaceModel:
                 torch_dtype="auto",
                 device_map="auto",)
 
-        elif 'recurrentgemma' in name.lower():
+        elif 'gemma' in name.lower():
+            
             model_id = f'google/{name}'
             self.tokenizer = AutoTokenizer.from_pretrained(
                 model_id, trust_remote_code=True,
                 device_map='auto', token_type_ids=None,
                 clean_up_tokenization_spaces=False)
-
             self.model = AutoModelForCausalLM.from_pretrained(
                 model_id,
                 trust_remote_code=True,
-                torch_dtype="auto",
+                torch_dtype=torch.bfloat16,
                 device_map="auto",)
             
         else:

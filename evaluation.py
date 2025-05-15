@@ -59,7 +59,7 @@ class EvaluationClassification(Evaluation):
                  dataset,
                 device):
         super(EvaluationClassification, self).__init__(model, dataset, nll, device)
-        if ('llama' in self.model.model_file.lower()) and (self.dataset.dataset_file == 'subjective'):
+        if ('llama' in self.model.model_file.lower() or "gemma" in self.model.model_file.lower()) and (self.dataset.dataset_file == 'subjective'):
             # subjective tokenized as subject + ive
             self.model.get_tokens([self.dataset.labels[0], 'subject'])
         elif ('phi' in self.model.model_file.lower()) and (self.dataset.dataset_file == 'subjective'):
